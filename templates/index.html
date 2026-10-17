@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Attendance System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7ff 0%, #e6e9f0 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 24px 32px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            padding: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .video-section h2 {
+            color: #1e293b;
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .video-section h2::before {
+            content: "📹";
+        }
+
+        #videoFeed {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #videoFeed img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .video-status {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .attendance-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .attendance-section h2 {
+            color: #1e293b;
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .attendance-section h2::before {
+            content: "📋";
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-item h3 {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-bottom: 4px;
+        }
+
+        .status-item .value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .status-item .value.stat-badge {
+            background: #dbeafe;
+            color: #2563eb;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+        }
+
+        .attendance-list {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .attendance-header {
+            background: #f1f5f9;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.875rem;
+        }
+
+        .attendance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background-color 0.2s;
+        }
+
+        .attendance-item:hover {
+            background: #f8fafc;
+        }
+
+        .attendance-item:last-child {
+            border-bottom: none;
+        }
+
+        .attendance-name {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .attendance-times {
+            display: flex;
+            gap: 16px;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .attendance-times span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .attendance-times strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .empty-state::before {
+            content: "📝";
+            display: block;
+            margin-bottom: 12px;
+            font-size: 2rem;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .controls h2 {
+            color: #1e293b;
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .controls h2::before {
+            content: "🎮";
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-outline {
+            background: white;
+            color: #4f46e5;
+            border: 2px solid #4f46e5;
+        }
+
+        .btn-outline:hover {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1e293b;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 1000;
+            font-size: 0.9rem;
+        }
+
+        .toast.success {
+            background: #10b981;
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+
+        .toast.info {
+            background: #3b82f6;
+        }
+
+        @media (max-width: 600px) {
+            .main-content {
+                padding: 16px;
+                gap: 16px;
+            }
+
+            .controls {
+                margin: 16px;
+                padding: 16px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            button {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Face Attendance System</h1>
+            <p>Real-time face recognition for attendance tracking</p>
+        </div>
+
+        <div class="main-content">
+            <div class="video-section">
+                <h2>Live Camera Feed</h2>
+                <div id="videoFeed">
+                    <img src="{{ url_for('video_feed') }}" alt="Video Feed">
+                    <div class="video-status" id="videoStatus">Initializing...</div>
+                </div>
+            </div>
+
+            <div class="attendance-section">
+                <h2>Today's Attendance</h2>
+                <div class="status-bar">
+                    <div class="status-item">
+                        <h3>Total Records</h3>
+                        <div class="value" id="totalRecords">0</div>
+                    </div>
+                    <div class="status-item">
+                        <h3>Present Today</h3>
+                        <div class="value" id="presentCount">0</div>
+                    </div>
+                    <div class="status-item">
+                        <h3>System Status</h3>
+                        <div class="value stat-badge" id="systemStatus">Ready</div>
+                    </div>
+                </div>
+                <div class="attendance-list" id="attendanceList">
+                    <div class="empty-state">
+                        No attendance records yet
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <h2>System Controls</h2>
+            <div class="btn-group">
+                <button class="btn-primary" id="refreshBtn">
+                    <span>🔄</span> Refresh Data
+                </button>
+                <button class="btn-secondary" id="downloadBtn">
+                    <span>📥</span> Download CSV
+                </button>
+                <button class="btn-outline" id="statusBtn">
+                    <span>ℹ️</span> System Info
+                </button>
+                <button class="btn-danger" id="clearBtn">
+                    <span>🗑️</span> Clear All
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let toastTimeout = null;
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 4000);
+        }
+
+        function updateVideoStatus(status) {
+            const videoStatus = document.getElementById('videoStatus');
+            videoStatus.textContent = status;
+            if (status === 'Connected') {
+                videoStatus.style.background = 'rgba(16, 185, 129, 0.8)';
+            } else if (status === 'Error') {
+                videoStatus.style.background = 'rgba(239, 68, 68, 0.8)';
+            } else {
+                videoStatus.style.background = 'rgba(0, 0, 0, 0.7)';
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+
+                document.getElementById('totalRecords').textContent = data.total_attendance;
+                document.getElementById('presentCount').textContent = data.face_names.length;
+                document.getElementById('systemStatus').textContent = data.notice || 'Ready';
+
+                // Update video status based on system state
+                if (data.loaded_faces > 0) {
+                    updateVideoStatus('Connected');
+                } else {
+                    updateVideoStatus('Waiting for faces...');
+                }
+
+                if (data.notice && data.notice !== '') {
+                    showToast(data.notice, 'info');
+                }
+            } catch (err) {
+                console.error('Error fetching status:', err);
+                updateVideoStatus('Error');
+                showToast('Failed to load system status', 'error');
+            }
+        }
+
+        async function updateAttendance() {
+            try {
+                const response = await fetch('/attendance');
+                const data = await response.json();
+                const attendanceList = document.getElementById('attendanceList');
+
+                if (data.length === 0) {
+                    attendanceList.innerHTML = '<div class="empty-state">No attendance records yet</div>';
+                    return;
+                }
+
+                attendanceList.innerHTML = data.map(item => `
+                    <div class="attendance-item">
+                        <div class="attendance-name">${item.name}</div>
+                        <div class="attendance-times">
+                            <span><span>🕐</span>In: <strong>${item.punch_in || '-'}</strong></span>
+                            <span><span>🕐</span>Out: <strong>${item.punch_out || '-'}</strong></span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Error fetching attendance:', err);
+                showToast('Failed to load attendance data', 'error');
+            }
+        }
+
+        document.getElementById('refreshBtn').addEventListener('click', async () => {
+            await updateStatus();
+            await updateAttendance();
+            showToast('Data refreshed successfully', 'success');
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            window.open('/download', '_blank');
+            showToast('Download started', 'success');
+        });
+
+        document.getElementById('statusBtn').addEventListener('click', async () => {
+            await updateStatus();
+            showToast('Status updated', 'info');
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', async () => {
+            if (!confirm('Are you sure you want to clear all attendance records? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/clear_attendance', { method: 'POST' });
+                const data = await response.json();
+                await updateAttendance();
+                await updateStatus();
+                showToast(data.message || 'Attendance cleared successfully', 'success');
+            } catch (err) {
+                console.error('Error clearing attendance:', err);
+                showToast('Failed to clear attendance', 'error');
+            }
+        });
+
+        // Initialize
+        async function initialize() {
+            await updateStatus();
+            await updateAttendance();
+
+            // Set up periodic updates
+            setInterval(updateAttendance, 5000); // Update attendance every 5 seconds
+            setInterval(updateStatus, 10000);   // Update status every 10 seconds
+        }
+
+        // Start initialization when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
